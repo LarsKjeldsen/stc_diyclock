@@ -59,6 +59,7 @@
 #else
  #define ADC_LIGHT 6
  #define ADC_TEMP  7
+ #define ADC_SNOOZE 4
 #endif
 
 // button switch aliases
@@ -71,6 +72,7 @@
 #endif
 #define SW2     P3_0
 #define SW1     P3_1
+#define SW_SNOOZE P1_4
 
 // ds1302 pins
 #if defined HW_MODEL_C

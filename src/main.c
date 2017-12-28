@@ -99,6 +99,9 @@ volatile int16_t count_20000;
 volatile __bit blinker_slowest;
 #endif
 
+#ifndef WITHOUT_SNOOZE
+#define SNOOZE_MINUTES 3
+#endif
 volatile uint16_t count_timeout; // max 6.5536 sec
 #define TIMEOUT_LONG 0xFFFF
 volatile __bit blinker_slow;
@@ -120,6 +123,12 @@ uint8_t alarm_mm_bcd;
 __bit alarm_pm;
 __bit alarm_trigger;
 __bit alarm_reset;
+#endif
+#ifndef WITHOUT_SNOOZE
+uint8_t snooze_hh;
+uint8_t snooze_mm;
+__bit snooze_pm;
+__bit alarm_snooze = 0;
 #endif
 __bit cfg_changed = 1;
 
@@ -422,7 +431,9 @@ int main()
                 alarm_trigger = 1;
             }
         } else {
-            alarm_trigger = 0;
+#ifdef WITHOUT_SNOOZE
+		    alarm_trigger = 0;
+#endif
             alarm_reset = 0;
         }
 
@@ -431,6 +442,9 @@ int main()
             if (ev == EV_S1_SHORT || ev == EV_S2_SHORT) {
                 alarm_reset = 1;
                 alarm_trigger = 0;
+#ifndef WITHOUT_SNOOZE
+				alarm_snooze = 0;
+#endif
                 ev = EV_NONE;
             }
         }
@@ -790,9 +804,51 @@ int main()
 
 #ifndef WITHOUT_ALARM
         if (alarm_trigger && !alarm_reset) {
+#ifndef WITHOUT_SNOOZE
+			if (SW_SNOOZE == 0) { // Snooze key pressed
+				uint8_t s_mm = ds_split2int(rtc_mm_bcd);
+				uint8_t s_hh = ds_split2int(rtc_hh_bcd);
+				BUZZER_OFF;
+				alarm_snooze = 1;
+				snooze_pm = 0;
+				
+				s_mm += SNOOZE_MINUTES;
+				if (s_mm >= 60)	{
+					s_mm -= 60;
+					s_hh++;
+					if (s_hh >= 24)
+						s_hh -=24;
+				}
+			    if (H12_12) {
+					if (s_hh >= 12) {
+						snooze_pm = 1;
+						s_hh -= 12;
+					}
+					if (s_hh == 0) {
+					s_hh = 12;
+					}
+				}
+				snooze_mm = ds_int2bcd(s_mm);
+				snooze_hh = ds_int2bcd(s_hh);
+			}
+			if (alarm_snooze) {
+				BUZZER_OFF;
+				if (snooze_hh == rtc_hh_bcd && snooze_mm == rtc_mm_bcd && snooze_pm == rtc_pm) {
+					alarm_snooze = 0;
+				}
+			}
+			else {
+				BUZZER_ON;
+			}
+#endif
             if (blinker_slow && blinker_fast) {
                 clearTmpDisplay();
+#ifndef WITHOUT_SNOOZE
+				if (!alarm_snooze)
+					BUZZER_ON;
+#else
                 BUZZER_ON;
+#endif
             } else {
                 BUZZER_OFF;
             }
