@@ -1,20 +1,20 @@
 SDCC ?= sdcc
 STCCODESIZE ?= 4089
 SDCCOPTS ?= --iram-size 256 --code-size $(STCCODESIZE) --xram-size 0 --data-loc 0x30 --disable-warning 126 --disable-warning 59
-SDCCREV ?= -Dstc15f204ea
+SDCCREV ?= -Dstc15w404as
 STCGAL ?= stcgal/stcgal.py
 STCGALOPTS ?= 
-STCGALPORT ?= /dev/ttyUSB0
-STCGALPROT ?= stc15a
+STCGALPORT ?= /dev/ttyS5
+STCGALPROT ?= stc15
 FLASHFILE ?= main.hex
 SYSCLK ?= 11059
-CFLAGS ?= -DWITH_ALT_LED9 -DWITHOUT_LEDTABLE_RELOC
+CFLAGS ?= -DWITH_ALT_LED9 -DWITHOUT_LEDTABLE_RELOC -DWITHOUT_DATE -DDEBUG -DWITHOUT_SNOOZE
 
 SRC = src/adc.c src/ds1302.c
 
 OBJ=$(patsubst src%.c,build%.rel, $(SRC))
 
-all: main
+all: main eeprom flash
 
 build/%.rel: src/%.c src/%.h
 	mkdir -p $(dir $@)
